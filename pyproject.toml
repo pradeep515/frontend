@@ -8,5 +8,8 @@ dependencies = [
     "reflex>=0.6.8",
     "reflex>=0.6.0a",
     "reflex-chakra",
+    "python-dotenv==1.0.1",
     "python-jose==3.3.0"
 ]
+[tool.uv]
+dev-dependencies = []
