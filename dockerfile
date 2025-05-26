@@ -21,6 +21,6 @@ COPY . /app
 # Make start.sh executable
 RUN chmod +x start.sh
 
-EXPOSE 8080
+EXPOSE 3000
 
 CMD ["/bin/sh", "./start.sh"]
