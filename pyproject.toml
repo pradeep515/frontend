@@ -7,5 +7,6 @@ requires-python = ">=3.13.1"
 dependencies = [
     "reflex>=0.6.8",
     "reflex>=0.6.0a",
-    "reflex-chakra"
+    "reflex-chakra",
+    "python-jose==3.3.0"
 ]
