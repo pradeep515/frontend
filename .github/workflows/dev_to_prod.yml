@@ -1,0 +1,24 @@
+name: Promote to Prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy to prod'
+        required: true
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to ECR
+        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <your-ecr-url>
+
+      - name: Deploy to ECS (Prod)
+        run: |
+          aws ecs update-service \
+            --cluster your-prod-cluster \
+            --service your-prod-service \
+            --force-new-deployment \
+            --region us-east-1 \
+            --desired-count 1
