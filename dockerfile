@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y curl git unzip && rm -rf /var/lib/apt/l
 # Install uv and reflex
 RUN pip install --no-cache-dir uv reflex
 RUN pip install reflex-chakra
+RUN pip install cryptography
+RUN pip install --force-reinstall python-jose==3.3.0
+RUN pip install --force-reinstall python-dotenv
 
 # Copy only dependency files first for caching
 COPY pyproject.toml uv.lock ./
