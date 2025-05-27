@@ -1,21 +1,24 @@
 import os
 import time
-from typing import Dict, List, Union
+from typing import Dict, List, Any
 
 import reflex as rx
 import httpx
 from jose import jwt
 from dotenv import load_dotenv
+from fastapi import FastAPI
 
-from frontend.pages import *  # If you have additional pages
+
+# Explicitly import dashboard
+from frontend.pages.dashboard import dashboard
+from frontend.states.queries import QueryAPI
 
 # Load environment variables
 load_dotenv()
 
-
 # --- JWT Utility --- #
 def generate_jwt() -> str:
-    """Generate a JWT token using API_KEY from environment."""
+    """Generate a JWT token using API_KEY."""
     payload = {
         "exp": int(time.time()) + 3600,
         "iat": int(time.time()),
@@ -23,16 +26,15 @@ def generate_jwt() -> str:
     }
     api_key = os.getenv("API_KEY")
     if not api_key:
-        raise ValueError("API_KEY not set in environment")
+        raise ValueError("API_KEY not set")
     return jwt.encode(payload, api_key, algorithm="HS256")
-
 
 # --- Application State --- #
 class State(rx.State):
     method: str = "GET"
     url: str = os.getenv("MIDDLE_TIER_URL", "http://localhost:8000")
     headers: List[Dict[str, str]] = [{"key": "", "value": ""}]
-    response_data: Union[List[Dict[str, Union[str, int, float]]], Dict[str, str]] = []
+    response_data: List[Dict[str, Any]] = []
 
     def add_header(self):
         self.headers.append({"key": "", "value": ""})
@@ -61,6 +63,10 @@ class State(rx.State):
         except httpx.HTTPError as e:
             self.response_data = [{"error": str(e)}]
 
+    @rx.var
+    def response_headers(self) -> List[str]:
+        """Compute header keys for response_data."""
+        return list(self.response_data[0].keys()) if self.response_data else []
 
 # --- UI Components --- #
 def header_input(index: int, field: str):
@@ -71,8 +77,8 @@ def header_input(index: int, field: str):
         width="100%",
     )
 
-
 def index():
+    """API Request Demo page."""
     return rx.vstack(
         rx.heading("API Request Demo"),
         rx.select(
@@ -103,32 +109,47 @@ def index():
         rx.button("Send Request", on_click=State.get_data),
         rx.cond(
             State.response_data,
-            rx.table_container(
-                rx.table(
-                    rx.thead(
-                        rx.tr(
+            rx.box(
+                # Header row
+                rx.hstack(
+                    rx.foreach(
+                        State.response_headers,
+                        lambda key: rx.text(
+                            str(key),
+                            font_weight="bold",
+                            padding="0.5em",
+                            border="1px solid #ddd",
+                            flex="1",
+                            text_align="center",
+                        ),
+                    ),
+                    background_color="#f0f0f0",
+                    width="100%",
+                ),
+                # Data rows
+                rx.vstack(
+                    rx.foreach(
+                        State.response_data,
+                        lambda row: rx.hstack(
                             rx.foreach(
-                                lambda: list(State.response_data[0].keys())
-                                if isinstance(State.response_data, list) and State.response_data
-                                else [],
-                                lambda key: rx.th(str(key)),
-                            )
-                        )
-                    ),
-                    rx.tbody(
-                        rx.foreach(
-                            lambda: State.response_data
-                            if isinstance(State.response_data, list)
-                            else [State.response_data],
-                            lambda row: rx.tr(
-                                rx.foreach(
-                                    lambda: list(row.values()),
-                                    lambda value: rx.td(str(value)),
-                                )
+                                row.values(),
+                                lambda value: rx.text(
+                                    str(value),
+                                    padding="0.5em",
+                                    border="1px solid #ddd",
+                                    flex="1",
+                                    text_align="center",
+                                ),
                             ),
-                        )
+                            width="100%",
+                        ),
                     ),
-                )
+                    width="100%",
+                ),
+                padding="1em",
+                border="1px solid #ddd",
+                border_radius="8px",
+                width="100%",
             ),
             rx.text("No data to display"),
         ),
@@ -136,7 +157,15 @@ def index():
         padding="20px",
     )
 
+# --- FastAPI for Health Endpoint --- #
+fastapi_app = FastAPI()
 
-# --- Register Page --- #
-app = rx.App()
-# app.add_page(index)
+@fastapi_app.get("/health")
+@fastapi_app.get("/health/")
+async def health():
+    print("Health check endpoint was reached")
+    return {"status": "ok"}
+
+app = rx.App(api_transformer=fastapi_app)
+app.add_page(dashboard, route="/", on_load=QueryAPI.run_get_request)
+app.add_page(index, route="/demo")

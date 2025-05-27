@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y curl git unzip && rm -rf /var/lib/apt/lists/*
 
 # Install uv and reflex
-RUN pip install --no-cache-dir uv reflex
+RUN pip install --no-cache-dir uv reflex==0.7.13
 RUN pip install reflex-chakra
 RUN pip install cryptography
 RUN pip install --force-reinstall python-jose==3.3.0
