@@ -32,7 +32,7 @@ def generate_jwt() -> str:
 # --- Application State --- #
 class State(rx.State):
     method: str = "GET"
-    url: str = os.getenv("MIDDLE_TIER_URL", "http://localhost:8000")
+    url: str = os.getenv("MIDDLE_TIER_URL", "http://localhost:8001")
     headers: List[Dict[str, str]] = [{"key": "", "value": ""}]
     response_data: List[Dict[str, Any]] = []
 
@@ -157,15 +157,16 @@ def index():
         padding="20px",
     )
 
+app = rx.App()
 # --- FastAPI for Health Endpoint --- #
-fastapi_app = FastAPI()
+# fastapi_app = FastAPI()
 
-@fastapi_app.get("/health")
-@fastapi_app.get("/health/")
-async def health():
-    print("Health check endpoint was reached")
-    return {"status": "ok"}
+# @fastapi_app.get("/health")
+# @fastapi_app.get("/health/")
+# async def health():
+#     print("Health check endpoint was reached")
+#     return {"status": "ok"}
 
-app = rx.App(api_transformer=fastapi_app)
-app.add_page(dashboard, route="/", on_load=QueryAPI.run_get_request)
-app.add_page(index, route="/demo")
+# app = rx.App(api_transformer=fastapi_app)
+# app.add_page(dashboard, route="/", on_load=QueryAPI.run_get_request)
+# app.add_page(index, route="/demo")
